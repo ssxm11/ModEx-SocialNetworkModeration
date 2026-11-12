@@ -13,8 +13,8 @@ def greedy_algorithm(agents, R_max):
             weight = 0
             value = 0
         else:
-            # Esfuerzo exacto que cuesta moderar a este agente
-            weight = math.ceil(abs(agent.opinion) * (1 - agent.receptivity) * agent.influence)
+            # Esfuerzo que cuesta moderar a este agente según la fórmula del modelo
+            weight = abs(agent.opinion) * (1 - agent.receptivity) * agent.influence
             
             # Estimado del valor o beneficio: que tanto reduce el extremismo al cuadrado con su influencia
             value = (agent.opinion ** 2) * agent.influence
@@ -37,7 +37,7 @@ def greedy_algorithm(agents, R_max):
     
     # se usa para seleccionar de forma voraz los mejores agentes mientras alcance el R_max
     for item in items:
-        if item['weight'] > 0 and current_effort + item['weight'] <= R_max:
+        if item['value'] > 0 and current_effort + item['weight'] <= R_max:
             strategy[item['index']] = 1
             current_effort += item['weight']
             
@@ -45,10 +45,14 @@ def greedy_algorithm(agents, R_max):
 
 def calcular_esfuerzo(agents, strategy):
     # Función auxiliar para sumar el esfuerzo total gastado con la estrategia elegida
-    total_esfuerzo = 0
+    total_esfuerzo = 0.0
     for agent, e in zip(agents, strategy):
         if e == 1:
-            total_esfuerzo += math.ceil(abs(agent.opinion) * (1 - agent.receptivity) * agent.influence)
+            total_esfuerzo += (
+                abs(agent.opinion)
+                * (1 - agent.receptivity)
+                * agent.influence
+            )
     return total_esfuerzo
 
 def calcular_extremismo(agents, strategy):
@@ -59,7 +63,7 @@ def calcular_extremismo(agents, strategy):
         op_final = 0 if e == 1 else agent.opinion
         suma_cuadrados += (op_final ** 2) * agent.influence
     
-    extremism = math.sqrt(suma_cuadrados / n) if n > 0 else 0.0
+    extremism = math.sqrt(suma_cuadrados) / n if n > 0 else 0.0
     return extremism
 
 # Recibe los datos de la red y devuelve la tripleta exacta:

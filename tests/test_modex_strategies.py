@@ -10,6 +10,34 @@ from estrats.entrada_modex import ModexInputData
 
 
 class ModexStrategyInputTests(unittest.TestCase):
+    def test_strategies_use_exact_effort_and_shared_extremism_formula(self) -> None:
+        cases = (
+            (
+                "2\n1.02,0.5,1\n0.98,0.5,1\n1\n",
+                (1, 1),
+                1.0,
+                0.0,
+            ),
+            (
+                "2\n10,0.5,1\n-20,0.5,2\n0\n",
+                (0, 0),
+                0.0,
+                15.0,
+            ),
+        )
+        for content, expected_strategy, expected_effort, expected_extremism in cases:
+            data = ModexInputData.from_text(content)
+            results = (
+                ("fuerza bruta", modexFB.modexFB(data.agents, data.max_moderation)),
+                ("programación dinámica", modexPD.modexPD(data)),
+                ("voraz", modexV.modexV(data)),
+            )
+            for name, result in results:
+                with self.subTest(case=content, strategy=name):
+                    self.assertEqual(result[0], expected_strategy)
+                    self.assertAlmostEqual(result[1], expected_effort)
+                    self.assertAlmostEqual(result[2], expected_extremism)
+
     def test_each_strategy_receives_parsed_input(self) -> None:
         content = "1\n0.25 0.8 2\n3\n"
         expected_data = ModexInputData.from_text(content)
@@ -36,7 +64,7 @@ class ModexStrategyInputTests(unittest.TestCase):
 
                 self.assertEqual(len(lines), len(data.agents) + 2)
                 self.assertTrue(math.isfinite(float(lines[0])))
-                self.assertTrue(lines[1].isdigit())
+                self.assertTrue(math.isfinite(float(lines[1])))
                 self.assertTrue(all(line in ("0", "1") for line in lines[2:]))
 
     def test_saved_v_and_pd_outputs_have_no_header(self) -> None:
@@ -58,7 +86,7 @@ class ModexStrategyInputTests(unittest.TestCase):
                     output_lines = output_path.read_text(encoding="utf-8").splitlines()
                     self.assertEqual(len(output_lines), 3)
                     self.assertTrue(math.isfinite(float(output_lines[0])))
-                    self.assertTrue(output_lines[1].isdigit())
+                    self.assertTrue(math.isfinite(float(output_lines[1])))
                     self.assertIn(output_lines[2], ("0", "1"))
 
 

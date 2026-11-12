@@ -13,8 +13,8 @@ class ModexDynamicProgrammingTests(unittest.TestCase):
         strategy, effort, extremism = modexPD.modexPD(data)
 
         self.assertEqual(strategy, (0, 1, 1))
-        self.assertEqual(effort, 10)
-        self.assertAlmostEqual(extremism, (100 / 3) ** 0.5)
+        self.assertAlmostEqual(effort, 8.1)
+        self.assertAlmostEqual(extremism, 10 / 3)
 
     def test_selects_agents_with_zero_effort(self) -> None:
         data = ModexInputData.from_text("2\n-30,1,1\n20,1,2\n0\n")
@@ -24,6 +24,17 @@ class ModexDynamicProgrammingTests(unittest.TestCase):
         self.assertEqual(strategy, (1, 1))
         self.assertEqual(effort, 0)
         self.assertEqual(extremism, 0)
+
+    def test_uses_exact_effort_without_rounding_each_agent(self) -> None:
+        data = ModexInputData.from_text(
+            "2\n1.02,0.5,1\n0.98,0.5,1\n1\n"
+        )
+
+        strategy, effort, extremism = modexPD.modexPD(data)
+
+        self.assertEqual(strategy, (1, 1))
+        self.assertAlmostEqual(effort, 1.0)
+        self.assertEqual(extremism, 0.0)
 
     def test_empty_agent_list_returns_zero_extremism(self) -> None:
         data = ModexInputData.from_text("0\n0\n")
