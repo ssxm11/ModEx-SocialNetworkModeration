@@ -1,27 +1,84 @@
-# Estrategia de fuerza bruta
-# algoritmo que genera todas las soluciones posibles y las evalúa para encontrar la mejor
 
+# ==========================================================
+# ESTRATEGIA DE FUERZA BRUTA - MODEX
+# ==========================================================
+# Genera y evalua exhaustivamente las 2^n estrategias
+# posibles para encontrar la solucion factible con
+# menor extremismo.
+# ==========================================================
 
 from itertools import product
-from math import ceil, sqrt
+from math import ceil, sqrt, isfinite
 
-from .entrada_modex import AgentData, ModexInputData
+from .entrada_modex import ModexInputData
+
+
+def validar_entrada(agents, R_max):
+    """
+    Verifica que los datos respeten los dominios del problema.
+    """
+
+    if not isinstance(R_max, int) or isinstance(R_max, bool):
+        raise ValueError("R_max debe ser un numero entero.")
+
+    if R_max < 0:
+        raise ValueError("R_max no puede ser negativo.")
+
+    for i, agent in enumerate(agents):
+
+        opinion = agent.opinion
+        receptivity = agent.receptivity
+        influence = agent.influence
+
+        if not isfinite(opinion):
+            raise ValueError(
+                f"La opinion del agente {i} debe ser finita."
+            )
+
+        if not -100 <= opinion <= 100:
+            raise ValueError(
+                f"La opinion del agente {i} debe estar entre -100 y 100."
+            )
+
+        if not isfinite(receptivity):
+            raise ValueError(
+                f"La receptividad del agente {i} debe ser finita."
+            )
+
+        if not 0 <= receptivity <= 1:
+            raise ValueError(
+                f"La receptividad del agente {i} debe estar entre 0 y 1."
+            )
+
+        if (
+            not isinstance(influence, int)
+            or isinstance(influence, bool)
+            or influence not in (1, 2, 3)
+        ):
+            raise ValueError(
+                f"La influencia del agente {i} debe ser 1, 2 o 3."
+            )
 
 
 def modexFB(agents, R_max):
     """
-    Algoritmo de fuerza bruta para resolver ModEx.
+    Resuelve el problema ModEx mediante fuerza bruta.
 
-    Entrada:
+    Parametros:
         agents: secuencia de agentes.
-        R_max: esfuerzo máximo disponible.
+        R_max: presupuesto maximo de moderacion.
 
-    Salida:
+    Retorna:
         (E, esfuerzo, extremismo)
+
+        E: tupla binaria que indica los agentes moderados.
+        esfuerzo: esfuerzo total utilizado.
+        extremismo: extremismo final de la red.
     """
 
-    if R_max < 0:
-        raise ValueError("R_max no puede ser negativo.")
+    agents = tuple(agents)
+
+    validar_entrada(agents, R_max)
 
     n = len(agents)
 
@@ -29,7 +86,10 @@ def modexFB(agents, R_max):
     if n == 0:
         return (), 0, 0.0
 
-    # Calcular el esfuerzo individual de moderar cada agente.
+    # ------------------------------------------------------
+    # 1. PRECALCULO DE COSTOS DE MODERACION
+    # ------------------------------------------------------
+
     costs = [
         ceil(
             abs(agent.opinion)
@@ -39,76 +99,104 @@ def modexFB(agents, R_max):
         for agent in agents
     ]
 
-    # Calcular la contribución individual al extremismo.
+    # ------------------------------------------------------
+    # 2. PRECALCULO DE CONTRIBUCIONES AL EXTREMISMO
+    # ------------------------------------------------------
+
     contributions = [
-        (agent.opinion ** 2) * agent.influence
+        agent.opinion ** 2 * agent.influence
         for agent in agents
     ]
 
+    # ------------------------------------------------------
+    # 3. INICIALIZACION DE LA MEJOR SOLUCION
+    # ------------------------------------------------------
+
     best_strategy = None
     best_effort = 0
-    best_extremism = float("inf")
-    best_remaining_extremism = float("inf")
+    best_remaining = float("inf")
 
-    # Generar exhaustivamente todas las estrategias binarias.
+    # ------------------------------------------------------
+    # 4. GENERACION EXHAUSTIVA DE ESTRATEGIAS
+    # ------------------------------------------------------
+
     for strategy in product((0, 1), repeat=n):
 
         effort = 0
         remaining_extremism = 0
 
-        # Evaluar cada agente de la estrategia.
-        for i in range(n):
+        # Evaluar todos los agentes de la estrategia.
+        for i, decision in enumerate(strategy):
 
-            if strategy[i] == 1:
+            if decision == 1:
+                # Moderar al agente: opinion final igual a cero.
                 effort += costs[i]
+
             else:
+                # No moderar: conserva su contribucion.
                 remaining_extremism += contributions[i]
 
-        # Descartar estrategias que exceden R_max.
+        # --------------------------------------------------
+        # 5. COMPROBACION DE FACTIBILIDAD
+        # --------------------------------------------------
+
         if effort > R_max:
             continue
 
-        # Calcular el extremismo de la red resultante.
-        extremism = sqrt(remaining_extremism / n)
+        # --------------------------------------------------
+        # 6. SELECCION DE LA MEJOR ESTRATEGIA
+        # --------------------------------------------------
 
-        # Conservar la mejor estrategia encontrada.
+        # Para n fijo, minimizar la suma restante equivale
+        # a minimizar el extremismo final.
+        #
+        # En caso de empate, se prefiere menor esfuerzo.
+
         if (
-            extremism < best_extremism
+            remaining_extremism < best_remaining
             or (
-                extremism == best_extremism
-                and effort < best_effort
+                remaining_extremism == best_remaining
+                and (
+                    best_strategy is None
+                    or effort < best_effort
+                )
             )
         ):
             best_strategy = strategy
             best_effort = effort
-            best_extremism = extremism
-            best_remaining_extremism = remaining_extremism
+            best_remaining = remaining_extremism
 
-    # Siempre existe al menos una solución:
-    # no moderar ningún agente (E = 0...0).
-    return (
-        best_strategy,
-        best_effort,
-        best_extremism
-    )
+    # La estrategia de no moderar ningun agente siempre
+    # es factible cuando R_max >= 0.
+    if best_strategy is None:
+        raise RuntimeError(
+            "No se encontro una estrategia factible."
+        )
+
+    # ------------------------------------------------------
+    # 7. CALCULO DEL EXTREMISMO FINAL
+    # ------------------------------------------------------
+
+    extremism = sqrt(best_remaining) / n
+
+    return best_strategy, best_effort, extremism
 
 
 def brute_force_algorithm(agents, R_max):
     """
-    Interfaz alternativa para ejecutar fuerza bruta.
-    Devuelve la tripleta (E, esfuerzo, extremismo).
+    Interfaz alternativa para ejecutar el algoritmo.
     """
     return modexFB(agents, R_max)
 
 
 def process(data: ModexInputData, original_content: str) -> str:
     """
-    Integra el algoritmo con la aplicación principal ModEx.
+    Integra fuerza bruta con la aplicacion principal.
 
-    Devuelve el archivo de salida con:
-        Línea 1: extremismo final.
-        Línea 2: esfuerzo utilizado.
-        Líneas siguientes: estrategia binaria.
+    Formato:
+        Linea 1: extremismo.
+        Linea 2: esfuerzo.
+        Lineas 3 hasta n+2: decisiones binarias.
     """
 
     if not isinstance(data, ModexInputData):
