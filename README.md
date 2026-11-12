@@ -2,7 +2,10 @@
 
 ## Integrantes del equipo
 
-<!-- Agregar aquí los nombres de los integrantes. -->
+Helkin Gabriel JimenezMedina - 2179462
+Esteban Samuel Córdoba Narváez - 2370976
+Brigitte Vanesa Chavez Riascos - 2510107
+
 
 ## Descripción
 
@@ -24,14 +27,17 @@ La aplicación ofrece tres métodos para resolver el problema:
   y selecciona mientras el presupuesto lo permita. Es una heurística y no
   garantiza encontrar el óptimo. Su tiempo es `O(n log n)`.
 - **Programación dinámica (`modexPD`)**: resuelve la selección como una mochila
-  0/1 y reconstruye una estrategia óptima para el modelo implementado. Su tiempo
-  y espacio son `O(n * R_max)` en el peor caso.
+  0/1 y reconstruye una estrategia óptima para el modelo implementado.
 
-En las estrategias voraz y de programación dinámica, el esfuerzo individual
-implementado es
-`ceil(|opinión| * (1 - receptividad) * influencia)` y el beneficio asociado a
-moderar un agente es `opinión² * influencia`. El extremismo reportado se calcula
-con las opiniones resultantes y las influencias de los agentes.
+El esfuerzo de moderar al agente `i` es
+`|opinión_i - opinión_final_i| * (1 - receptividad_i) * influencia_i`.
+El esfuerzo puede ser decimal y no se redondea por agente.
+El extremismo reportado es
+`sqrt(sum(influencia_i * opinión_final_i²)) / n`, donde la opinión final es cero
+para los agentes moderados. Las estrategias voraz y de programación dinámica
+usan `opinión_i² * influencia_i` como beneficio estimado de moderar al agente.
+La programación dinámica conserva los estados no dominados de esfuerzo y
+beneficio, por lo que su peor caso puede ser exponencial.
 
 ## Formato de entrada
 

@@ -1,6 +1,6 @@
 
 import itertools
-from math import ceil, sqrt
+from math import sqrt
 
 import pytest
 
@@ -25,11 +25,9 @@ def evaluador_independiente(agents, R_max):
     for strategy in itertools.product((0, 1), repeat=n):
 
         effort = sum(
-            ceil(
-                abs(agent.opinion)
-                * (1 - agent.receptivity)
-                * agent.influence
-            )
+            abs(agent.opinion)
+            * (1 - agent.receptivity)
+            * agent.influence
             for i, agent in enumerate(agents)
             if strategy[i] == 1
         )
@@ -120,6 +118,18 @@ class TestModexFB:
         assert strategy == (0, 0)
         assert effort == 0
         assert extremism == pytest.approx(sqrt(600) / 2)
+
+    def test_esfuerzo_usa_valores_exactos_sin_redondear_por_agente(self):
+        agents = (
+            AgentData(1.02, 0.5, 1),
+            AgentData(0.98, 0.5, 1),
+        )
+
+        strategy, effort, extremism = modexFB(agents, 1)
+
+        assert strategy == (1, 1)
+        assert effort == pytest.approx(1.0)
+        assert extremism == 0.0
 
     def test_opinion_fuera_de_rango(self):
 
@@ -214,5 +224,5 @@ class TestModexFB:
 
         assert len(lines) == 5
         assert float(lines[0]) == pytest.approx(9.428090)
-        assert int(lines[1]) == 28
+        assert float(lines[1]) == pytest.approx(28)
         assert lines[2:] == ["1", "0", "1"]

@@ -8,7 +8,7 @@
 # ==========================================================
 
 from itertools import product
-from math import ceil, sqrt, isfinite
+from math import sqrt, isfinite
 
 from .entrada_modex import ModexInputData
 
@@ -91,11 +91,9 @@ def modexFB(agents, R_max):
     # ------------------------------------------------------
 
     costs = [
-        ceil(
-            abs(agent.opinion)
-            * (1 - agent.receptivity)
-            * agent.influence
-        )
+        abs(agent.opinion)
+        * (1 - agent.receptivity)
+        * agent.influence
         for agent in agents
     ]
 
@@ -113,7 +111,7 @@ def modexFB(agents, R_max):
     # ------------------------------------------------------
 
     best_strategy = None
-    best_effort = 0
+    best_effort = 0.0
     best_remaining = float("inf")
 
     # ------------------------------------------------------
@@ -122,7 +120,7 @@ def modexFB(agents, R_max):
 
     for strategy in product((0, 1), repeat=n):
 
-        effort = 0
+        effort = 0.0
         remaining_extremism = 0
 
         # Evaluar todos los agentes de la estrategia.
