@@ -71,7 +71,7 @@ def create_output_file(
         }
         processor = processors[strategy]
         output_stem = f"{source.stem}_{strategy}_salida"
-        output_content = f"salida - {strategy}\n{processor(content)}"
+        output_content = processor(content)
 
     output_dir = project_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)

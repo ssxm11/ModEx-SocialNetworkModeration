@@ -100,10 +100,6 @@ def modexPD(
 
 def process(data: ModexInputData, original_content: str) -> str:
     strategy, effort, extremism = modexPD(data, original_content)
-    return "\n".join(
-        (
-            f"Estrategia de Programación Dinámica (E): {strategy}",
-            f"Esfuerzo Total: {effort} (R_max permitidos: {data.max_moderation})",
-            f"Extremismo de la Red Moderada: {extremism:.4f}",
-        )
-    )
+    output_lines = [f"{extremism:.6f}", str(effort)]
+    output_lines.extend(str(selected) for selected in strategy)
+    return "\n".join(output_lines)
