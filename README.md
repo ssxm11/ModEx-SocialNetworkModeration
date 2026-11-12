@@ -1,37 +1,99 @@
-# ModEx
+# ModEx: moderación del extremismo de opiniones
 
-Aplicación de escritorio hecha con Pygame. Permite añadir archivos `.txt`, seleccionar uno de la lista para ver su contenido, abrirlo con la aplicación asociada o quitarlo de la lista sin eliminarlo del disco.
+## Integrantes del equipo
 
-La ventana usa el icono `assets/modex.ico` y una paleta blanca con verde y verde lima.
+<!-- Agregar aquí los nombres de los integrantes. -->
 
-Los botones **modexFB**, **modexV** y **modexPD** son plantillas para conectar los algoritmos; por ahora conservan el texto de entrada y crean, respectivamente, archivos como `nombre_modexFB_salida.txt`, `nombre_modexV_salida.txt` y `nombre_modexPD_salida.txt`. Si ya existe un archivo con ese nombre, se agrega un sufijo numérico.
+## Descripción
 
-Antes de generar una salida con un modo ModEx, el archivo de entrada se interpreta y valida con `ModexInputData`, definido en [estrats/entrada_modex.py](./estrats/entrada_modex.py). El formato es:
+Aplicación de escritorio para el problema ModEx: dada una red social con `n`
+agentes y un presupuesto máximo `R_max`, seleccionar qué opiniones moderar para
+minimizar el extremismo de la red sin exceder el esfuerzo disponible.
+
+Cada agente tiene una opinión, receptividad e influencia. Una estrategia es una
+secuencia binaria `E = (e0, ..., e(n-1))`: `ei = 1` significa que se modera al
+agente `i` (su opinión final se establece en cero), y `ei = 0` que permanece
+sin cambios.
+
+La aplicación ofrece tres métodos para resolver el problema:
+
+- **Fuerza bruta (`modexFB`)**: evalúa todas las estrategias posibles y devuelve
+  una solución óptima. Su tiempo de ejecución es exponencial, del orden de
+  `O(n * 2^n)`.
+- **Voraz (`modexV`)**: ordena a los agentes por una razón de beneficio/esfuerzo
+  y selecciona mientras el presupuesto lo permita. Es una heurística y no
+  garantiza encontrar el óptimo. Su tiempo es `O(n log n)`.
+- **Programación dinámica (`modexPD`)**: resuelve la selección como una mochila
+  0/1 y reconstruye una estrategia óptima para el modelo implementado. Su tiempo
+  y espacio son `O(n * R_max)` en el peor caso.
+
+En las estrategias voraz y de programación dinámica, el esfuerzo individual
+implementado es
+`ceil(|opinión| * (1 - receptividad) * influencia)` y el beneficio asociado a
+moderar un agente es `opinión² * influencia`. El extremismo reportado se calcula
+con las opiniones resultantes y las influencias de los agentes.
+
+## Formato de entrada
+
+El archivo de texto contiene `n + 2` líneas: el número de agentes, una línea
+por agente y el presupuesto máximo.
 
 ```text
 3
--0.5 0.8 1
-0.2, 0.3, 2
-0.9 0.1 3
-5
+-30, 0.9, 1
+20, 0.1, 2
+50, 0.5, 1
+35
 ```
 
-La primera línea indica el número de agentes; cada una de las siguientes filas contiene la opinión, receptividad e influencia de un agente, separadas por espacios o comas; la última línea indica `R_max`. La opinión y la receptividad deben ser números finitos, la influencia un entero entre 1 y 3, y `R_max` un entero no negativo. Se ignoran las líneas vacías. Los errores de formato se muestran en la aplicación y no generan una salida. El botón **Generar salida** conserva su comportamiento anterior.
+Cada fila de agente contiene opinión, receptividad e influencia. Se aceptan
+comas o espacios como separadores, incluidos espacios alrededor de las comas.
+Las líneas vacías se ignoran. El parser valida que la opinión esté entre `-100`
+y `100`, la receptividad entre `0` y `1`, la influencia sea un entero entre
+`1` y `3`, y `R_max` sea un entero no negativo. Las opiniones decimales también
+son aceptadas por la implementación.
 
-Para obtener los datos desde un archivo o desde texto en el código:
+**Diferencia respecto al dominio del enunciado:** este especifica opiniones
+enteras e influencias reales entre `1` y `3`; el parser actual acepta opiniones
+numéricas decimales, pero exige que la influencia sea un entero (`1`, `2` o
+`3`).
 
-```python
-from estrats.entrada_modex import ModexInputData
+## Formato de salida
 
-datos = ModexInputData.from_file("entrada.txt")
-# datos.agents: tupla de AgentData; datos.max_moderation: R_max
+Cada estrategia escribe un archivo de texto con `n + 2` líneas, sin etiquetas:
+
+1. Extremismo de la red moderada.
+2. Esfuerzo total utilizado.
+3. Una decisión `0` o `1` por agente, en el orden de entrada.
+
+Por ejemplo, para dos agentes:
+
+```text
+12.345678
+20
+1
+0
 ```
 
-Los tres módulos de estrategia (`estrats/modexFB.py`, `estrats/modexPD.py` y `estrats/modexV.py`) reciben un `ModexInputData` mediante su función `process(data, original_content)`. Al implementar cada algoritmo, usa ese primer argumento para consultar `data.agents` (cada elemento contiene `opinion`, `receptivity` e `influence`) y `data.max_moderation` (`R_max`). Por ahora `process` conserva el contenido original como salida.
+Los archivos se guardan en `output/` con un nombre que identifica el archivo
+de origen y el método (`_modexFB_salida.txt`, `_modexV_salida.txt` o
+`_modexPD_salida.txt`). Si el nombre ya existe, se añade un sufijo numérico.
 
-## Ejecutar en Windows
+## Uso de la aplicación
 
-Desde la carpeta del proyecto, abre PowerShell y ejecuta:
+La interfaz permite añadir archivos `.txt`, revisar su contenido, generar una
+salida con fuerza bruta, voraz o programación dinámica, y consultar entradas y
+resultados en pestañas separadas. Las salidas generadas se muestran en la
+interfaz y se guardan en `output/`. También es posible abrir archivos con la
+aplicación asociada o retirarlos de la lista sin borrarlos del disco.
+
+El botón **Generar salida** copia el contenido de entrada a un archivo de
+salida, precedido por una línea `salida`; no ejecuta una estrategia. Para
+resolver ModEx, usa uno de los botones de estrategia.
+
+## Instalación y ejecución en Windows
+
+Desde la carpeta del proyecto, ejecuta en PowerShell:
 
 ```powershell
 py -m venv .venv
@@ -40,4 +102,21 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-Al pulsar **Añadir archivo**, puedes seleccionar archivos de texto para agregarlos a la lista. Las pestañas **Entradas** y **Salidas** permiten consultar por separado los archivos de origen y los resultados generados; también se muestran las salidas `.txt` que ya existen en `output`. Al generar una salida, se muestra automáticamente en la vista previa. Selecciona un archivo para leerlo y usa **Abrir para editar** o **Quitar de lista** según necesites. Para procesar una entrada, elige **Generar salida** o uno de los tres modos.
+Para ejecutar las pruebas:
+
+```powershell
+py -m unittest discover -s tests
+```
+
+## Estructura del proyecto
+
+- `main.py`: interfaz gráfica, selección y visualización de archivos, y
+  generación de salidas.
+- `estrats/entrada_modex.py`: lectura y validación de entradas.
+- `estrats/modexFB.py`: estrategia de fuerza bruta.
+- `estrats/modexV.py`: estrategia voraz.
+- `estrats/modexPD.py`: estrategia de programación dinámica.
+- `tests/`: pruebas automatizadas.
+- `assets/modex.ico`: icono de la aplicación.
+- `output/`: archivos de salida generados.
+- `enunciado_proyecto.md`: enunciado del proyecto del curso.

@@ -78,12 +78,8 @@ def modexV(data: ModexInputData, original_content: str = "") -> tuple:
     return (estrategia, esfuerzo_total, extremismo_red)
 
 def process(data: ModexInputData, original_content: str) -> str:
-    #Pygame resultado en pantalla
     estrategia, esfuerzo, extremismo = modexV(data, original_content)
-    
-    output_lines = [
-        f"Estrategia Voraz (E): {estrategia}",
-        f"Esfuerzo Total: {esfuerzo} (R_max permitidos: {data.max_moderation})",
-        f"Extremismo de la Red Moderada: {extremismo:.4f}"
-    ]
+
+    output_lines = [f"{extremismo:.6f}", str(esfuerzo)]
+    output_lines.extend(str(selected) for selected in estrategia)
     return "\n".join(output_lines)

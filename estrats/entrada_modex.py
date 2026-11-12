@@ -58,7 +58,7 @@ class ModexInputData:
 
         agents: list[AgentData] = []
         for agent_index, (line_number, line) in enumerate(lines[1:-1]):
-            values = re.split(r"[\s,]+", line)
+            values = [part.strip() for part in re.split(r"[\s,]+", line) if part.strip()]
             if len(values) != 3:
                 raise ModexInputError(
                     f"La línea {line_number} del agente {agent_index} "
@@ -66,7 +66,7 @@ class ModexInputData:
                 )
 
             try:
-                opinion = float(values[0])
+                opinion = float(values[0].replace("\u2212", "-"))
                 receptivity = float(values[1])
             except ValueError as error:
                 raise ModexInputError(
@@ -77,6 +77,16 @@ class ModexInputData:
                 raise ModexInputError(
                     f"La opinión y receptividad del agente {agent_index} "
                     f"en la línea {line_number} deben ser valores finitos."
+                )
+            if not -100 <= opinion <= 100:
+                raise ModexInputError(
+                    f"La opinión del agente {agent_index} "
+                    f"en la línea {line_number} debe estar entre -100 y 100."
+                )
+            if not 0 <= receptivity <= 1:
+                raise ModexInputError(
+                    f"La receptividad del agente {agent_index} "
+                    f"en la línea {line_number} debe estar entre 0 y 1."
                 )
 
             try:
