@@ -111,7 +111,8 @@ python main.py
 Para ejecutar las pruebas:
 
 ```powershell
-py -m unittest discover -s tests
+py -m pip install pytest
+py -m pytest
 ```
 
 ## Estructura del proyecto
@@ -125,4 +126,4 @@ py -m unittest discover -s tests
 - `tests/`: pruebas automatizadas.
 - `assets/modex.ico`: icono de la aplicación.
 - `output/`: archivos de salida generados.
-- `enunciado_proyecto.md`: enunciado del proyecto del curso.
+
